@@ -106,6 +106,10 @@ public class Events {
 			public void onClientJoin(ClientJoinEvent e) {
 				DbHandler.addClientOnline(e.getClientId(), e.getClientNickname(), Main.api.getChannelInfo(Main.api.getClientInfo(e.getClientId()).getChannelId()).getName(), "online");
 				
+				if(Main.ls.clientExists(Main.asyncApi.getClientInfo(e.getClientId()).getUninterruptibly().getUniqueIdentifier())) {
+					
+				}
+				
 				if(!Main.api.getClientByUId(e.getUniqueClientIdentifier()).getNickname().equals("ZsBot")) {
 					Logger.addUserLog(e.getUniqueClientIdentifier(), Main.api.getClientByUId(e.getUniqueClientIdentifier()).getNickname(), "ClientJoin", "");
 				}
