@@ -3,6 +3,7 @@ package main.java.ts3bot.init;
 import main.java.ts3bot.dbHandler.DbHandler;
 import main.java.ts3bot.eventHandler.Events;
 import main.java.ts3bot.lvlSystem.LvlSystem;
+import main.java.ts3bot.utils.ChannelCache;
 import main.java.ts3bot.utils.ClientUpdater;
 import main.java.ts3bot.utils.globals;
 
@@ -23,6 +24,7 @@ public class Main {
 	
 	public static ClientUpdater cu;
 	public static LvlSystem ls;
+	public static ChannelCache channels;
 	
 	public static boolean isFirstConnect = true;
 	
@@ -31,7 +33,7 @@ public class Main {
 		//config.setHost("127.0.0.1");
 		
 		// zockerstuebchen
-		config.setHost("62.146.10.130");
+		config.setHost(globals.ZS_SERVER_IP);
 		
 		config.setEnableCommunicationsLogging(true);
 		
@@ -54,12 +56,31 @@ public class Main {
 				
 				api.setNickname("ZsBot");
 				
+				DbHandler.emptyClientOnlineList();
+				
+				channels = new ChannelCache();
+
+				cu = new ClientUpdater(globals.UPDATE_RATE);
+				
+				for (ClientInfo ci : cu.cc.getClientList().values()) {
+					if (api.getChannelInfo(ci.getChannelId()).getName().equals("AFK / Kurz Tür")) {
+						DbHandler.addClientOnline(ci.getId(), ci.getNickname(), channels.getChannel(ci.getChannelId()).getName(), "away");
+					}
+					else {
+						DbHandler.addClientOnline(ci.getId(), ci.getNickname(), channels.getChannel(ci.getChannelId()).getName(), "online");
+					}
+				}
+				
 				if (isFirstConnect) {
+					ls = new LvlSystem();
+					
 					isFirstConnect = false;
 				}
 				else {
 					ls.fillLvlSystemOnInit();
 				}
+				
+				Events.loadEvents();
 			}
 
 			@Override
@@ -71,25 +92,8 @@ public class Main {
 		
 		query.connect();
 		
-		DbHandler.emptyClientOnlineList();
-
-		// Update every 15 minutes
-		cu = new ClientUpdater(globals.UPDATE_RATE);
-		
-		for (ClientInfo ci : cu.cc.getClientList().values()) {
-			if (api.getChannelInfo(ci.getChannelId()).getName().equals("AFK / Kurz Tür")) {
-				DbHandler.addClientOnline(ci.getId(), ci.getNickname(), api.getChannelInfo(ci.getChannelId()).getName(), "away");
-			}
-			else {
-				DbHandler.addClientOnline(ci.getId(), ci.getNickname(), api.getChannelInfo(ci.getChannelId()).getName(), "online");
-			}
-		}
-		
-		ls = new LvlSystem();
-		
-		Events.loadEvents();
+		Events.addListener();
 		
 		System.out.println("Der Bot wurde gestartet!");
 	}
-
 }
