@@ -8,7 +8,6 @@ import main.java.ts3bot.utils.ClientUpdater;
 import main.java.ts3bot.utils.globals;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
-import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
@@ -16,18 +15,14 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
 
 public class Main {
-
-	public static final TS3Config config = new TS3Config();
-	public static final TS3Query query = new TS3Query(config);
-	public static final TS3Api api = query.getApi();
-	
-	public static ClientUpdater cu;
-	public static LvlSystem ls;
-	public static ChannelCache channels;
 	
 	public static boolean isFirstConnect = true;
+	public static LvlSystem lvlSystem;
+	public static ChannelCache channels;
+	public static ClientUpdater clientUpdater;
 	
 	public static void main(String[] args) {
+		final TS3Config config = new TS3Config();
 		// localhost
 		//config.setHost("127.0.0.1");
 		
@@ -41,7 +36,8 @@ public class Main {
 		config.setConnectionHandler(new ConnectionHandler() {
 
 			@Override
-			public void onConnect(TS3Query ts3Query) {
+			public void onConnect(TS3Query query) {
+				TS3Api api = query.getApi();
 				// localhost
 				//api.login("bot", "i25PWd50");
 				
@@ -57,12 +53,12 @@ public class Main {
 				
 				DbHandler.emptyClientOnlineList();
 				
-				channels = new ChannelCache();
+				channels = new ChannelCache(api);
 
-				cu = new ClientUpdater(globals.UPDATE_RATE);
+				clientUpdater = new ClientUpdater(globals.UPDATE_RATE, api, lvlSystem);
 				
-				for (ClientInfo ci : cu.cc.getClientList().values()) {
-					if (api.getChannelInfo(ci.getChannelId()).getName().equals("AFK / Kurz Tür")) {
+				for (ClientInfo ci : clientUpdater.clientCache.getClientList().values()) {
+					if (channels.getChannel(ci.getChannelId()).getName().equals("AFK / Kurz Tür")) {
 						DbHandler.addClientOnline(ci.getId(), ci.getNickname(), channels.getChannel(ci.getChannelId()).getName(), "away");
 					}
 					else {
@@ -71,27 +67,31 @@ public class Main {
 				}
 				
 				if (isFirstConnect) {
-					ls = new LvlSystem();
+					lvlSystem = new LvlSystem(clientUpdater);
 					
 					isFirstConnect = false;
 				}
 				else {
-					ls.fillLvlSystemOnInit();
+					lvlSystem.fillLvlSystemOnInit();
 				}
 				
-				Events.loadEvents();
+				Events.loadEvents(api);
+				
+				System.out.println("connected!");
 			}
 
 			@Override
 			public void onDisconnect(TS3Query ts3Query) {
-				
+				System.out.println("disconnected!");
 			}
 			
 		});
 		
+		TS3Query query = new TS3Query(config);
+				
 		query.connect();
 		
-		Events.addListener();
+		Events.addListener(query.getApi(), lvlSystem, channels, clientUpdater);
 		
 		System.out.println("Der Bot wurde gestartet!");
 	}

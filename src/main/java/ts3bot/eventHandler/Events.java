@@ -1,5 +1,6 @@
 package main.java.ts3bot.eventHandler;
 
+import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
@@ -15,18 +16,20 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
 
-import main.java.ts3bot.init.Main;
 import main.java.ts3bot.logger.Logger;
+import main.java.ts3bot.lvlSystem.LvlSystem;
+import main.java.ts3bot.utils.ChannelCache;
+import main.java.ts3bot.utils.ClientUpdater;
 import main.java.ts3bot.utils.globals;
 import main.java.ts3bot.dbHandler.DbHandler;
 
 public class Events {
-	public static void loadEvents() {
-		Main.api.registerAllEvents();
+	public static void loadEvents(TS3Api api) {
+		api.registerAllEvents();
 	}
 	
-	public static void addListener() {
-		Main.api.addTS3Listeners(new TS3Listener() {
+	public static void addListener(final TS3Api api, final LvlSystem lvlSystem, final ChannelCache channels, final ClientUpdater clientUpdater) {
+		api.addTS3Listeners(new TS3Listener() {
 			
 			@Override
 			public void onTextMessage(TextMessageEvent e) {
@@ -35,19 +38,19 @@ public class Events {
 				
 				if (e.getMessage().startsWith("!zsbot")) {
 					if (e.getMessage().length() == 4) {
-						Main.api.sendPrivateMessage(e.getInvokerId(), "Here is a list of bot commands: ");
+						api.sendPrivateMessage(e.getInvokerId(), "Here is a list of bot commands: ");
 					}
 					else {
 						
 						// lvl system
 						if (e.getMessage().equals("!zsbot lvl")) {
-							Main.api.sendPrivateMessage(e.getInvokerId(), "You are lvl 27!");
+							api.sendPrivateMessage(e.getInvokerId(), "You are lvl 27!");
 						}
 						else if (e.getMessage().equals("!zsbot lvl showoff")) {
-							Main.api.sendChannelMessage(Main.api.getClientInfo(e.getInvokerId()).getChannelId(), e.getInvokerName() + " is lvl 27!");
+							api.sendChannelMessage(api.getClientInfo(e.getInvokerId()).getChannelId(), e.getInvokerName() + " is lvl 27!");
 						}
 						else {
-							Main.api.sendPrivateMessage(e.getInvokerId(), "Type '!zsbot' for a list of commands"); //
+							api.sendPrivateMessage(e.getInvokerId(), "Type '!zsbot' for a list of commands"); //
 						}
 						
 						
@@ -77,11 +80,11 @@ public class Events {
 			
 			@Override
 			public void onClientMoved(ClientMovedEvent e) {		
-				DbHandler.updateClientChannel(e.getClientId(), Main.channels.getChannel(e.getTargetChannelId()).getName());
+				DbHandler.updateClientChannel(e.getClientId(), channels.getChannel(e.getTargetChannelId()).getName());
 				
 				String status = "online";
 				
-				if (Main.channels.getChannel(e.getTargetChannelId()).getName().equals("AFK / Kurz Tür")) {
+				if (channels.getChannel(e.getTargetChannelId()).getName().equals("AFK / Kurz Tür")) {
 					status = "away";
 				}
 				
@@ -91,8 +94,8 @@ public class Events {
 				
 				DbHandler.updateClientStatus(e.getClientId(), status);
 				
-				ClientInfo ci = Main.cu.cc.getClient(e.getClientId());
-				Logger.addUserLog(ci.getUniqueIdentifier(), ci.getNickname(), "ClientMoved", Main.channels.getChannel(e.getTargetChannelId()).getName());
+				ClientInfo ci = clientUpdater.clientCache.getClient(e.getClientId());
+				Logger.addUserLog(ci.getUniqueIdentifier(), ci.getNickname(), "ClientMoved", channels.getChannel(e.getTargetChannelId()).getName());
 			}
 			
 			@Override
@@ -100,7 +103,7 @@ public class Events {
 				// mark client offline in db
 				DbHandler.deleteClientOnline(e.getClientId());
 				
-				ClientInfo ci = Main.cu.cc.getClient(e.getClientId());
+				ClientInfo ci = clientUpdater.clientCache.getClient(e.getClientId());
 				Logger.addUserLog(ci.getUniqueIdentifier(), ci.getNickname(), "ClientLeave", "");
 			}
 			
@@ -108,11 +111,11 @@ public class Events {
 			public void onClientJoin(ClientJoinEvent e) {
 				DbHandler.addClientOnline(e.getClientId(), e.getClientNickname(), "Wartestübchen", "online");
 				
-				if(Main.ls.clientExists(e.getUniqueClientIdentifier())) {
-					Main.ls.resetBothTimeConnected(e.getUniqueClientIdentifier());
+				if(lvlSystem.clientExists(e.getUniqueClientIdentifier())) {
+					lvlSystem.resetBothTimeConnected(e.getUniqueClientIdentifier());
 				}
 				else {
-					Main.ls.addClient(e.getUniqueClientIdentifier());
+					lvlSystem.addClient(e.getUniqueClientIdentifier());
 				}
 				
 				Logger.addUserLog(e.getUniqueClientIdentifier(), e.getClientNickname(), "ClientJoin", "");
@@ -120,32 +123,32 @@ public class Events {
 			
 			@Override
 			public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelPasswordChanged", Main.channels.getChannel(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelPasswordChanged", channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelMoved(ChannelMovedEvent e) {		
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelMoved", Main.channels.getChannel(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelMoved", channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelEdit(ChannelEditedEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelEdited", Main.channels.getChannel(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelEdited", channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDescriptionEdited", Main.channels.getChannel(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDescriptionEdited", channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelDeleted(ChannelDeletedEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDeleted", Main.channels.getChannel(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDeleted", channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelCreate(ChannelCreateEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelCreated", Main.channels.getChannel(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelCreated", channels.getChannel(e.getChannelId()).getName());
 			}
 		});
 	}

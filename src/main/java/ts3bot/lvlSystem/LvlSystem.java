@@ -8,12 +8,14 @@ import java.sql.SQLException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
 
 import main.java.ts3bot.dbHandler.DbHandler;
-import main.java.ts3bot.init.Main;
+import main.java.ts3bot.utils.ClientUpdater;
 
 public class LvlSystem {
 	
-	public static final int expScaling = 45;
-	public static final int expLvlOne = 30;
+	public ClientUpdater clientUpdater;
+	
+	public final int expScaling = 45;
+	public final int expLvlOne = 30;
 		
 	/*
 	 * clientData index values
@@ -26,12 +28,13 @@ public class LvlSystem {
 	 */
 	private int[] clientData;
 
-	public LvlSystem() {
+	public LvlSystem(ClientUpdater clientUpdater) {
 		fillLvlSystemOnInit();
+		this.clientUpdater = clientUpdater;
 	}
 	
 	public void update() {
-		for (ClientInfo ci : Main.cu.cc.getClientList().values()) {
+		for (ClientInfo ci : clientUpdater.clientCache.getClientList().values()) {
 			if(clientExists(ci.getUniqueIdentifier())) {
 				loadClientData(ci.getUniqueIdentifier());
 				
@@ -115,7 +118,7 @@ public class LvlSystem {
 	
 	public void fillLvlSystemOnInit() {
 		
-		for (ClientInfo ci : Main.cu.cc.getClientList().values()) {
+		for (ClientInfo ci : clientUpdater.clientCache.getClientList().values()) {
 			if(!clientExists(ci.getUniqueIdentifier())) {
 				addClient(ci.getUniqueIdentifier());
 			}
@@ -133,7 +136,7 @@ public class LvlSystem {
 		
 		PreparedStatement query = null;
 		
-		ClientInfo ci = Main.cu.cc.getClientByUid(uid);
+		ClientInfo ci = clientUpdater.clientCache.getClientByUid(uid);
 		long tmpTimeConnected = ci.getTimeConnected();
 		
 		long rest = ci.getTimeConnected() % 1000;
@@ -169,7 +172,7 @@ public class LvlSystem {
 		
 		PreparedStatement query = null;
 		
-		ClientInfo ci = Main.cu.cc.getClientByUid(uID);
+		ClientInfo ci = clientUpdater.clientCache.getClientByUid(uID);
 		long tmpTimeConnected = ci.getTimeConnected();
 		
 		long rest = ci.getTimeConnected() % 1000;
@@ -183,7 +186,7 @@ public class LvlSystem {
 		try {
 			query = con.prepareStatement(sql);
 			query.setString(1, uID);
-			query.setString(2, Main.cu.cc.getClientByUid(uID).getNickname());
+			query.setString(2, clientUpdater.clientCache.getClientByUid(uID).getNickname());
 			query.setInt(3, 1);
 			query.setInt(4, 0);
 			query.setInt(5, expLvlOne);
@@ -253,7 +256,7 @@ public class LvlSystem {
 				expTotal = clientData[3];
 			}
 			
-			query.setString(1, Main.cu.cc.getClientByUid(uID).getNickname());
+			query.setString(1, clientUpdater.clientCache.getClientByUid(uID).getNickname());
 			query.setInt(2, lvl);
 			query.setInt(3, expCurrent);
 			query.setInt(4, expNextLvl);

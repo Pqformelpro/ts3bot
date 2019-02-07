@@ -4,16 +4,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
-
-import main.java.ts3bot.init.Main;
 
 public class ChannelCache {
 
 	Map<Integer, Channel> channels = new HashMap<Integer, Channel>();
 	
-	public ChannelCache() {
-		List<Channel> tmpChannels = Main.api.getChannels();
+	public TS3Api api;
+	
+	public ChannelCache(TS3Api api) {
+		List<Channel> tmpChannels = api.getChannels();
+		
+		this.api = api;
 		
 		for(Channel channel : tmpChannels) {
 			channels.put(channel.getId(), channel);

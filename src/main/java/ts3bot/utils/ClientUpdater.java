@@ -4,9 +4,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-import main.java.ts3bot.init.Main;
+import main.java.ts3bot.lvlSystem.LvlSystem;
 
 /**
  * Simple demo that uses java.util.Timer to schedule a task 
@@ -15,12 +16,19 @@ import main.java.ts3bot.init.Main;
 
 public class ClientUpdater {
     Timer timer;
-    public ClientCache cc;
-    public AfkHandler ah;
+    
+    public ClientCache clientCache;
+    public AfkHandler afkHandler;
 
-    public ClientUpdater(int seconds) {
-    	this.cc = new ClientCache();
-    	this.ah = new AfkHandler();
+    public TS3Api api;
+    public LvlSystem lvlSystem;
+
+    public ClientUpdater(int seconds, TS3Api api, LvlSystem lvlSystem) {
+    	this.clientCache = new ClientCache();
+    	this.afkHandler = new AfkHandler(api, this);
+    	
+    	this.api = api;
+    	this.lvlSystem = lvlSystem;
     	
     	fillClientCacheOnInit();
     	
@@ -29,11 +37,11 @@ public class ClientUpdater {
 	}
     
     public void fillClientCacheOnInit() {
-    	List<Client> clients =  Main.api.getClients();
+    	List<Client> clients =  api.getClients();
         
         for (Client client : clients) {
         	if (client.isRegularClient()) {
-        		this.cc.setClient(client.getId(), Main.api.getClientInfo(client.getId()));
+        		this.clientCache.setClient(client.getId(), api.getClientInfo(client.getId()));
         	}
 		}
     }
@@ -41,31 +49,31 @@ public class ClientUpdater {
     class RemindTask extends TimerTask {
         public void run() {
         	
-        	Main.ls.update();
+        	lvlSystem.update();
         	
-        	cc = new ClientCache();
+        	clientCache = new ClientCache();
         	
-            List<Client> clients =  Main.api.getClients();
+            List<Client> clients =  api.getClients();
             
             String uid;
             
             for (Client client : clients) {
             	if (!client.getNickname().equals("ZsBot")) {
-            		cc.setClient(client.getId(), Main.api.getClientInfo(client.getId()));
+            		clientCache.setClient(client.getId(), api.getClientInfo(client.getId()));
             		
             		uid = client.getUniqueIdentifier();
             		
             		if(client.getChannelId() != globals.AFK_CHANNEL_ID) {
 	            		if(client.isOutputMuted()) {
-	            			if(!ah.clientExists(uid)) {
-	            				ah.addClientAfk(uid);
+	            			if(!afkHandler.clientExists(uid)) {
+	            				afkHandler.addClientAfk(uid);
 	            			}
 	            			else {
-	            				ah.incrementClientAfk(uid);
+	            				afkHandler.incrementClientAfk(uid);
 	            			}
 	            		}
             		}
-            		ah.moveClientsToAfk();
+            		afkHandler.moveClientsToAfk();
             	}
 			}
             
