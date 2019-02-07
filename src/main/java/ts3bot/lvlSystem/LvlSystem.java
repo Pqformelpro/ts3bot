@@ -183,7 +183,7 @@ public class LvlSystem {
 		try {
 			query = con.prepareStatement(sql);
 			query.setString(1, uID);
-			query.setString(2, Main.api.getClientByUId(uID).getNickname());
+			query.setString(2, Main.cu.cc.getClientByUid(uID).getNickname());
 			query.setInt(3, 1);
 			query.setInt(4, 0);
 			query.setInt(5, expLvlOne);
