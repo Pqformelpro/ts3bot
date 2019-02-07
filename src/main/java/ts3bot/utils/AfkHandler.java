@@ -18,7 +18,6 @@ public class AfkHandler {
 	public void addClientAfk(String uid) {
 		if(!clientExists(uid)) {
 			mutedClients.put(uid, 0);
-			System.out.println("Client added: " + uid + " " + Main.cu.cc.getClientByUid(uid).getNickname());
 		}
 	}
 	
@@ -32,18 +31,16 @@ public class AfkHandler {
 	 
 	 public void incrementClientAfk(String uid) {
 		 mutedClients.replace(uid, mutedClients.get(uid) + 1);
-		 System.out.println("Client incremented: " + uid + " " + Main.cu.cc.getClientByUid(uid).getNickname() + " " + mutedClients.get(uid));
 	 }
 	 
 	 private void removeClientAfk(String uid) {
 		 mutedClients.remove(uid);
-		 System.out.println("Client removed: " + uid + " " + Main.cu.cc.getClientByUid(uid).getNickname());
 	 }
      
      public void moveClientsToAfk() {
      	for(String uid : mutedClients.keySet()) {
      		if(mutedClients.get(uid) >= 5) {
-     			Main.api.moveClient(Main.api.getClientByUId(uid).getId(), globals.AFK_CHANNEL_ID);
+     			Main.api.moveClient(Main.cu.cc.getClientByUid(uid).getId(), globals.AFK_CHANNEL_ID);
      			removeClientAfk(uid);
      		}
      		if(isClientNoLongerAfk(uid)) {
@@ -53,7 +50,7 @@ public class AfkHandler {
      }
      
      private boolean isClientNoLongerAfk(String uid) {
-    	 ClientInfo client = Main.api.getClientByUId(uid);
+    	 ClientInfo client = Main.cu.cc.getClientByUid(uid);
     	 
     	 return client.getChannelId() != globals.AFK_CHANNEL_ID && !client.isOutputMuted(); 
      }
