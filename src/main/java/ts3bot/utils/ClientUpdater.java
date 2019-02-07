@@ -32,7 +32,7 @@ public class ClientUpdater {
     	List<Client> clients =  Main.api.getClients();
         
         for (Client client : clients) {
-        	if (!client.getNickname().equals("ZsBot")) {
+        	if (client.isRegularClient()) {
         		this.cc.setClient(client.getId(), Main.api.getClientInfo(client.getId()));
         	}
 		}
