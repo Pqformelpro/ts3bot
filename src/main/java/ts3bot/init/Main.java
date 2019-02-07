@@ -20,7 +20,6 @@ public class Main {
 	public static final TS3Config config = new TS3Config();
 	public static final TS3Query query = new TS3Query(config);
 	public static final TS3Api api = query.getApi();
-	public static final TS3ApiAsync asyncApi = query.getAsyncApi();
 	
 	public static ClientUpdater cu;
 	public static LvlSystem ls;
