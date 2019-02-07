@@ -23,7 +23,9 @@ import main.java.ts3bot.dbHandler.DbHandler;
 public class Events {
 	public static void loadEvents() {
 		Main.api.registerAllEvents();
-		
+	}
+	
+	public static void addListener() {
 		Main.api.addTS3Listeners(new TS3Listener() {
 			
 			@Override
@@ -74,12 +76,12 @@ public class Events {
 			}
 			
 			@Override
-			public void onClientMoved(ClientMovedEvent e) {
-				DbHandler.updateClientChannel(e.getClientId(), Main.api.getChannelInfo(Main.api.getClientInfo(e.getClientId()).getChannelId()).getName());
+			public void onClientMoved(ClientMovedEvent e) {		
+				DbHandler.updateClientChannel(e.getClientId(), Main.channels.getChannel(e.getTargetChannelId()).getName());
 				
 				String status = "online";
 				
-				if (Main.api.getChannelInfo(e.getTargetChannelId()).getName().equals("AFK / Kurz Tür")) {
+				if (Main.channels.getChannel(e.getTargetChannelId()).getName().equals("AFK / Kurz Tür")) {
 					status = "away";
 				}
 				
@@ -90,7 +92,7 @@ public class Events {
 				DbHandler.updateClientStatus(e.getClientId(), status);
 				
 				ClientInfo ci = Main.cu.cc.getClient(e.getClientId());
-				Logger.addUserLog(ci.getUniqueIdentifier(), ci.getNickname(), "ClientMoved", Main.api.getChannelInfo(e.getTargetChannelId()).getName());
+				Logger.addUserLog(ci.getUniqueIdentifier(), ci.getNickname(), "ClientMoved", Main.channels.getChannel(e.getTargetChannelId()).getName());
 			}
 			
 			@Override
@@ -104,50 +106,46 @@ public class Events {
 			
 			@Override
 			public void onClientJoin(ClientJoinEvent e) {
-				DbHandler.addClientOnline(e.getClientId(), e.getClientNickname(), Main.api.getChannelInfo(Main.api.getClientInfo(e.getClientId()).getChannelId()).getName(), "online");
+				DbHandler.addClientOnline(e.getClientId(), e.getClientNickname(), "Wartestübchen", "online");
 				
-				if(Main.ls.clientExists(Main.asyncApi.getClientInfo(e.getClientId()).getUninterruptibly().getUniqueIdentifier())) {
-					
+				if(Main.ls.clientExists(e.getUniqueClientIdentifier())) {
+					Main.ls.resetBothTimeConnected(e.getUniqueClientIdentifier());
+				}
+				else {
+					Main.ls.addClient(e.getUniqueClientIdentifier());
 				}
 				
-				if(!Main.api.getClientByUId(e.getUniqueClientIdentifier()).getNickname().equals("ZsBot")) {
-					Logger.addUserLog(e.getUniqueClientIdentifier(), Main.api.getClientByUId(e.getUniqueClientIdentifier()).getNickname(), "ClientJoin", "");
-				}
+				Logger.addUserLog(e.getUniqueClientIdentifier(), e.getClientNickname(), "ClientJoin", "");
 			}
 			
 			@Override
 			public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelPasswordChanged", Main.api.getChannelInfo(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelPasswordChanged", Main.channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
-			public void onChannelMoved(ChannelMovedEvent e) {
-				// log channel move with (channelname, uid, nickname, date, time)
-				
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelMoved", Main.api.getChannelInfo(e.getChannelId()).getName());
+			public void onChannelMoved(ChannelMovedEvent e) {		
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelMoved", Main.channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelEdit(ChannelEditedEvent e) {
-				// log channel edit with (channelname, channeledit?, uid, nickname, date, time)
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelEdited", Main.api.getChannelInfo(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelEdited", Main.channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDescriptionEdited", Main.api.getChannelInfo(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDescriptionEdited", Main.channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelDeleted(ChannelDeletedEvent e) {
-				// log channel deletion with (channelname, uid, nickname, date, time)
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDeleted", Main.api.getChannelInfo(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelDeleted", Main.channels.getChannel(e.getChannelId()).getName());
 			}
 			
 			@Override
 			public void onChannelCreate(ChannelCreateEvent e) {
-				// log channel creation with (channelname, uid, nickname, date, time)
-				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelCreated", Main.api.getChannelInfo(e.getChannelId()).getName());
+				Logger.addChannelLog(e.getInvokerUniqueId(), e.getInvokerName(), "ChannelCreated", Main.channels.getChannel(e.getChannelId()).getName());
 			}
 		});
 	}
