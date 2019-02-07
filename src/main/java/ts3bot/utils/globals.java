@@ -10,4 +10,5 @@ public class globals {
 	public static final int UPDATE_RATE = 60;
 	
 	public static final int ZS_SERVER_ID = 841;
+	public static final String ZS_SERVER_IP = "62.146.10.130";
 }
