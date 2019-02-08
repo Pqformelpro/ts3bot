@@ -7,7 +7,7 @@ import java.util.TimerTask;
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-import main.java.ts3bot.lvlSystem.LvlSystem;
+import main.java.ts3bot.init.Main;
 
 /**
  * Simple demo that uses java.util.Timer to schedule a task 
@@ -21,14 +21,12 @@ public class ClientUpdater {
     public AfkHandler afkHandler;
 
     public TS3Api api;
-    public LvlSystem lvlSystem;
 
-    public ClientUpdater(int seconds, TS3Api api, LvlSystem lvlSystem) {
+    public ClientUpdater(int seconds, TS3Api api) {
     	this.clientCache = new ClientCache();
-    	this.afkHandler = new AfkHandler(api, this);
+    	this.afkHandler = new AfkHandler(api);
     	
     	this.api = api;
-    	this.lvlSystem = lvlSystem;
     	
     	fillClientCacheOnInit();
     	
@@ -49,7 +47,7 @@ public class ClientUpdater {
     class RemindTask extends TimerTask {
         public void run() {
         	
-        	lvlSystem.update();
+        	Main.lvlSystem.update();
         	
         	clientCache = new ClientCache();
         	

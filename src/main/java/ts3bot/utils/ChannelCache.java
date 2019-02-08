@@ -14,9 +14,9 @@ public class ChannelCache {
 	public TS3Api api;
 	
 	public ChannelCache(TS3Api api) {
-		List<Channel> tmpChannels = api.getChannels();
-		
 		this.api = api;
+		
+		List<Channel> tmpChannels = api.getChannels();
 		
 		for(Channel channel : tmpChannels) {
 			channels.put(channel.getId(), channel);

@@ -55,7 +55,7 @@ public class Main {
 				
 				channels = new ChannelCache(api);
 
-				clientUpdater = new ClientUpdater(globals.UPDATE_RATE, api, lvlSystem);
+				clientUpdater = new ClientUpdater(globals.UPDATE_RATE, api);
 				
 				for (ClientInfo ci : clientUpdater.clientCache.getClientList().values()) {
 					if (channels.getChannel(ci.getChannelId()).getName().equals("AFK / Kurz Tür")) {
@@ -67,7 +67,7 @@ public class Main {
 				}
 				
 				if (isFirstConnect) {
-					lvlSystem = new LvlSystem(clientUpdater);
+					lvlSystem = new LvlSystem();
 					
 					isFirstConnect = false;
 				}
@@ -87,11 +87,11 @@ public class Main {
 			
 		});
 		
-		TS3Query query = new TS3Query(config);
+		final TS3Query query = new TS3Query(config);
 				
 		query.connect();
 		
-		Events.addListener(query.getApi(), lvlSystem, channels, clientUpdater);
+		Events.addListener(query.getApi());
 		
 		System.out.println("Der Bot wurde gestartet!");
 	}
